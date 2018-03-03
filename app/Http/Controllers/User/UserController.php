@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\User;
 
+use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest\StoreRequest;
+use App\Http\Requests\UserRequest\UpdateRequest;
 
 class UserController extends Controller
 {
@@ -14,18 +17,10 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        $users = User::all();
+        return response()->json(['data' => $users]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -33,9 +28,17 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        //
+
+        $data = $request->all();
+        $data['password'] = bcrypt($request->password);
+        $data['verified'] = User::UNVERIFIED_USER;
+        $data['verification_token'] = User::generateVerificationCode();
+        $data['admin'] = User::REGULAR_USER;
+
+        $user = User::create($data);
+        return response()->json(['data' => $user], 200);
     }
 
     /**
@@ -46,18 +49,8 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
+        $user = User::findOrFail($id);
+        return response()->json(['data' => $user], 200);
     }
 
     /**
@@ -67,9 +60,44 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateRequest $request, $id)
     {
-        //
+        $user = User::findOrFail($id);
+
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+
+        if ($request->has('email') && $user->email != $request->email) {
+            $user->verified = User::UNVERIFIED_USER;
+            $user->verification_token = User::generateVerificationCode();
+            $user->email = $request->email;
+        }
+
+        if ($request->has('password')) {
+            $user->password = bcrypt($request->password());
+        }
+
+        if ($request->has('admin')) {
+            if (!$user->isVerified()) {
+                return response()->json([
+                    'error' => 'Only verified users can modify the admin field',
+                    'code' => 409
+                ], 409);
+            }
+
+            $user->admin = $request->admin;
+        }
+
+        if (!$user->isDirty()) {
+            return response()->json([
+                'error' => 'You need to specify a different value to update',
+                'code'  => 422
+            ], 422);
+        }
+
+        $user->save();
+        return response()->json(['data' => $user], 200);
     }
 
     /**
@@ -80,6 +108,8 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+        return response()->json(['data' => $user], 200);
     }
 }
