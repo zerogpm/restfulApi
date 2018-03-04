@@ -79,10 +79,7 @@ class UserController extends ApiController
 
         if ($request->has('admin')) {
             if (!$user->isVerified()) {
-                return response()->json([
-                    'error' => 'Only verified users can modify the admin field',
-                    'code' => 409
-                ], 409);
+                return $this->errorResponse('Only verified users can modify the admin field',409);
             }
 
             $user->admin = $request->admin;
