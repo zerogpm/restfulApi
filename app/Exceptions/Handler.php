@@ -4,9 +4,13 @@ namespace App\Exceptions;
 
 use App\Traits\ApiResponser;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -60,7 +64,29 @@ class Handler extends ExceptionHandler
             $modelName = class_basename($exception->getModel());
             return $this->errorResponse("Does not exists at {$modelName} table with that specified ID", 404);
         }
+
+        if ($exception instanceof AuthenticationException) {
+            return $this->unauthenticated($request, $exception);
+        }
+
+        if ($exception instanceof AuthorizationException) {
+            return $this->errorResponse($exception->getMessage() , 403);
+        }
+
+        if ($exception instanceof MethodNotAllowedHttpException) {
+            return $this->errorResponse('The specified Method for the request is invalid' , 405);
+        }
+
+        if ($exception instanceof NotFoundHttpException) {
+            return $this->errorResponse('The specified URL cannot be found' , 404);
+        }
+
         return parent::render($request, $exception);
+    }
+
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return $this->errorResponse('Unauthenticated.' , 401);
     }
 
     protected function convertValidationExceptionToResponse(ValidationException $e, $request)
