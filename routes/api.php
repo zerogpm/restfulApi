@@ -42,4 +42,4 @@ Route::resource('transactions', 'Transaction\TransactionController', ['only' => 
 /**
  * Users
  */
-Route::resource('users', 'User\UserController', ['except' => ['index', 'edit']]);
+Route::resource('users', 'User\UserController', ['except' => ['edit']]);
