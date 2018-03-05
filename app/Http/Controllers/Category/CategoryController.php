@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Category;
 
 use App\Category;
+use App\Http\Requests\CategoryRequest\StoreRquest;
 use App\Http\Controllers\ApiController;
 use Illuminate\Http\Request;
 
@@ -25,9 +26,10 @@ class CategoryController extends ApiController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreRquest $request)
     {
-        //
+        $newCategory = Category::create($request->all());
+        return $this->showOne($newCategory, 201);
     }
 
     /**
@@ -61,6 +63,6 @@ class CategoryController extends ApiController
      */
     public function destroy(Category $category)
     {
-        //
+        return $this->showOne($category);
     }
 }
