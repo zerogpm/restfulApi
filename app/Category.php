@@ -16,6 +16,10 @@ class Category extends Model
       'descriptions',
     ];
 
+    protected $hidden = [
+        'deleted_at'
+    ];
+
     public function products()
     {
         return $this->belongsToMany(Product::class);
