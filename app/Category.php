@@ -17,7 +17,8 @@ class Category extends Model
     ];
 
     protected $hidden = [
-        'deleted_at'
+        'deleted_at',
+        'pivot'
     ];
 
     public function products()
